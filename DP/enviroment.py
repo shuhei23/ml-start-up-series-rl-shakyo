@@ -43,7 +43,7 @@ class Environment():
         # 今いる位置
         self.agent_state = State()
         # 移動するときの報酬。なるべく少ない歩数でゴールするために負の値にする。
-        self.defalt_reward = -0.04
+        self.default_reward = -0.04
 
         self.move_prob = move_prob
         self.reset() # reset はagent_stateをリセットしている（後で定義）
