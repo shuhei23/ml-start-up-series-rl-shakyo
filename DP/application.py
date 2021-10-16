@@ -4,6 +4,18 @@ import tornado.web
 from environment import Environment
 from planner import ValueIterationPlanner
 
+# Git 使い方
+# cd hogehoge/ とか，落とすディレクトリにcd
+# git clone https://github.com/shuhei23/ml-start-up-series-rl-shakyo/
+# 更新があった場合には，hogehoge ディレクトリ内で
+# git pull すれば OK
+# 最新の場合には，Already up to date. と表示される
+
+# Webアプリケーションのtornado
+# https://qiita.com/Hironsan/items/4e0345704cda5b661d9f
+
+# RequestHandler とは ... HTTP通信のときの get とか post の情報を
+# RequestHandler が受け取っている
 class IndexHandler(tornado.web.RequestHandler): # RequestHandler を継承するきまり
     
     def get(self): # もともとのgetの書き換え
