@@ -11,3 +11,17 @@
 
 {% block body %}
 <div class="container">
+    <p class="title-top">
+        <h1 class="title">Dynamic Programming Simulator</h1>
+    </p>
+    <div id="app">
+        <li v-for= "user in users"
+            v-text="user.name" >
+        </li> 
+        <button class="Hello Button" @click="appendHelllo()">Button</button>
+        <li v-for= "item in hello"
+            v-text="item" >
+        </li>
+    </div>
+</div> 
+{% end %}
