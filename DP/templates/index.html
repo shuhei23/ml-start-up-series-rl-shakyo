@@ -7,10 +7,10 @@
 
 {% block bottom %}
 <script type="text/javascript" src="{{ static_url('js/index.js') }}"></script>
+{% end %}
+
+{% block body %}
 <div id="app">
     <p v-text = "message"></p>
 </div>
 {% end %}
-
-{% block body %}
-<div class="container">
