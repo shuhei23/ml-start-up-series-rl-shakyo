@@ -6,6 +6,14 @@ var app = new Vue({
             {name: 'Adam'},
             {name: 'Ben'},
             {name: 'Chris'}
-        ]
+        ],
+        hoge: []
+    },
+    methods: {
+        appendHoge: function(){
+            this.hoge.push("hoge!")
+        /* 変数へのアクセスはthis.ナントカ. とすればOK */
+        }
     }
+
 })
