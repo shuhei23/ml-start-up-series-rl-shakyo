@@ -50,7 +50,7 @@ class EpsilonGreedyAgent():
         (1-epsilon)の確率で期待値が最大のコインを選ぶ(活用)
         """
         coins = range(len(self.V)) # e.g., range(5) =  [0, 1, 2, 3, 4]
-        if random.random() < self.epsilon:
+        if random.random() < self.epsilon: # epsilon大きいと探索が強いめ
             return random.choice(coins) # coinsの要素を同じ確率で選択, e.g., Pr(random.choice(['a', 'b', 'c', 'd', 'e']) = 'a') = 20 percent
         else:
             return np.argmax(self.V) # 配列からVが最大になるインデックスを返す
@@ -90,7 +90,7 @@ if __name__ == "__main__":
 
         env = CoinToss([0.1, 0.5, 0.1, 0.9, 0.1])
         epsilons = [0.0, 0.1, 0.2, 0.4, 0.5, 0.8] # epsilonsの要素数だけ試行
-        game_steps = list(range(10, 310, 10))# 0 10 20 ... 300 310 コイントス回数
+        game_steps = list(range(10, 3100, 10))# 0 10 20 ... 3090 3100 コイントス回数
         result = {}
         for e in epsilons:
             agent = EpsilonGreedyAgent(epsilon=e)
