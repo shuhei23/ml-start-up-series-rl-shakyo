@@ -34,7 +34,7 @@ def show_q_value(Q):
             if state_exist:
                 
                 _r = 1 + (nrow - 1 - r) * state_size
-                _c = 1 + c + state_size #(_r,_c) = 状態を指定したときの，3*3のマスの真ん中の座標
+                _c = 1 + c * state_size #(_r,_c) = 状態を指定したときの，3*3のマスの真ん中の座標
                 # 行動に割り振られる値の定義は↓で定義されている
                 # https://github.com/openai/gym/blob/590f2504a76fa98f3a734a4d8d45d536e86eb5d5/gym/envs/toy_text/frozen_lake.py#L10
                 reward_map[_r][_c - 1] = Q[s][0] # 左に行くとき
@@ -55,3 +55,5 @@ def show_q_value(Q):
     ax.set_yticklabels(range(nrow + 1))
     ax.grid(which="both")
     plt.show()
+    
+    #https://github.com/openai/gym/blob/590f2504a76fa98f3a734a4d8d45d536e86eb5d5/gym/envs/toy_text/frozen_lake.py#L15
