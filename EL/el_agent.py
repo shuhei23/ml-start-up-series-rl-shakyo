@@ -53,4 +53,4 @@ class ELAgent():
             plt.fill_between(indices, means - stds, means + stds, alpha=0.1, color="g") # 1σ分の信頼区間を表示
             plt.plot(indices, means, "o-", color="g", label = "Rewards for each {} episode".format(interval))
             plt.legend(loc="best")
-            plt.show
+            plt.show()
