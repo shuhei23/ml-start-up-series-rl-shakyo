@@ -5,7 +5,7 @@ class ELAgent():
 
     def __init__(self, epsilon):
         self.Q = {}
-        self.epsillon = epsilon
+        self.epsilon = epsilon
         self.reward_log = []
     
     def policy(self, s, actions):
