@@ -24,9 +24,15 @@ class ELAgent():
                 return np.random.randint(len(actions))
     
     def init_log(self):
+        """
+        self.reward_log = [] となる
+        """
         self.reward_log = []
     
     def log(self, reward):
+        """
+        self.reward_log.append(reward) をする
+        """
         self.reward_log.append(reward)
 
     def show_reward_log(self, interval=50, episode=-1):
