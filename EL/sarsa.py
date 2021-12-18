@@ -29,9 +29,11 @@ class SARSAAgent(ELAgent):
                     env.render()
                 n_state, reward, done, info = env.step(a) # 上のaによって1ステップ進む
                 # -> なくなった a = self.policy(s, actions)
-                n_action = self.policy(n_state, actions) # n_ はNextの意
+                n_action = self.policy(n_state, actions) # n_ はNextの意。
                 # -> gain = reward + gamma * max(self.Q[n_state])
-                gain = reward + gamma * self.Q[n_state][n_action] # 次のステップでの移動を考慮している
+                gain = reward + gamma * self.Q[n_state][n_action] # 次のステップでの移動を考慮している，
+                # 上の更新式では，policyのランダム性がgainの値に反映されている，
+                # policy がランダム探索を選んだ場合，Q-learning の gain とは異なる値になる
                 estimated = self.Q[s][a]
                 self.Q[s][a] += learning_rate * (gain - estimated)
                 s = n_state
