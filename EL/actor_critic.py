@@ -20,12 +20,12 @@ class Actor(ELAgent):
         """
         return np.exp(x) / np.sum(np.exp(x), axis=0)
 
-    def policy(self, s, actions):
+    def policy(self, s):
         """
         いまのQ[state]で各actionの起こる確率を定めている
         (確率はsoftmax関数の出力として定めた)
         """
-        a = np.random.choice(self.action, 1, p = self.softmax(self.Q[s])) 
+        a = np.random.choice(self.actions, 1, p = self.softmax(self.Q[s])) 
         # e.g. Q[2] = [10, 100, 1000] だと， Pr(a=1, s=2) = exp(10) / (exp(10)+exp(100)+exp(1000)) > 0
         # a = argmax(Q[s]) じゃないのがポイント -> 探索ができる?
         return a[0]
