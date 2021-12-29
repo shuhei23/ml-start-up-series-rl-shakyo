@@ -12,4 +12,4 @@ print("Bias shape is {}.".format(bias.shape)) # Bias shape is (4,).
 
 x = np.random.rand(1, 2)
 y = model.predict(x)
-print("x is ({}) and y is ({})".format(x.shape, y.shape))
+print("x is ({}) and y is ({})".format(x.shape, y.shape)) # x is ((1, 2)) and y is ((1, 4)).
