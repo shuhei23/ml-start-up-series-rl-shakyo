@@ -19,10 +19,10 @@ X_train, X_test, y_train, y_test = train_test_split(
 
 model = K.Sequential([
     K.layers.Conv2D(
-        5, kernel_size=3, strides=1, padding="same", 
+        100, kernel_size=3, strides=1, padding="same", 
         input_shape=image_shape, activation="relu"),
     K.layers.Conv2D(
-        3, kernel_size=2, strides=1, padding="same",
+        100, kernel_size=2, strides=1, padding="same",
         activation="relu"),
     K.layers.Flatten(),
     K.layers.Dense(units=num_class, activation="softmax")
