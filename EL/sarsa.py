@@ -7,6 +7,7 @@ class SARSAAgent(ELAgent):
 
     def __init__(self, epsilon=0.1):
         super().__init__(epsilon)
+        # super().のとつけると，ELAgent の中の__init__が呼ばれる
 
     def learn(self, env, episode_count=1000, gamma=0.9,
               learning_rate=0.1, render=False, report_interval=50):

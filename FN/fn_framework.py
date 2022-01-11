@@ -200,3 +200,168 @@ class Trainer():
         recent = range(len(self.experiences) - count, len(self.experiences))
         return [self.experiences[i] for i in recent]
 
+class Observer():
+    """
+    ラッパー(Wrapper): 本質的な処理以外を隠して、煩雑さを回避するために、本質的な処理＋重複する処理をまとめた関数やクラス(できることは本質的な処理と変わらない)
+    具体例:
+    ImaiPrint(int dst_buf, int dst_size, int src_buf, int src_size){
+        // dst_buf; sizeof() # 本質的な作業ではないけど必要
+        // src_buf; sizeof() # 煩雑なので，ここの2行を見えないようにする -> つつんでいる -> ラッパー
+        if(dst_size >  src_size)
+        {
+            sprintf()
+        }
+    }
+    
+    継承について:
+    class ImaiObserver(Observer): 
+    # Observerクラスを継承した ImaiObserver，という，継承もとを親/super(Observerクラス)，継承した先を子(ImaiObserverクラス)
+    # Imai1 = ImaiObserver(...);
+    # Imai1.transform(...) -> ImaiObserverクラスのtransformが呼ばれる，なかったら，継承元/親のObserverクラスから呼ばれる -> エラー吐かれる
+    def transform(self, state): 
+        # class ImaiObserver(Observer)を後で作ったときに，def transform(...)をImaiObserverの中につくる
+        # ImaiObserver の中に def transform(...) がないと　，ここの transform が呼ばれてエラーとなる
+        return あんこ
+    """
+    def __init__(self, env):
+        self._env = env
+
+    @property #propertyをつけるとこのメソッドを変数みたいに扱える trainer.trainer_name <-○ / trainer.trainer_name() <-× / trainer.trainer_name = ”hoge” <- × 
+    def action_space(self):
+        return self._env.action_space
+
+    @property
+    def observation_space(self):
+        return self._env.observation_space
+
+    def reset(self):
+        # Envクラスのreset()関数の返り値はagentの初期値が返ってくるため変換処理であるtransform()関数をかませている
+        # <https://github.com/openai/gym/blob/590f2504a76fa98f3a734a4d8d45d536e86eb5d5/gym/core.py#L61>
+        return self.transform(self._env.reset())
+
+    def render(self):
+        self._env.render(mode="human")
+    
+    def step(self, action):
+        """
+        env.step()で得られる状態stateはtransform()してからreturnする。
+        """
+        n_state, reward, done, info = self._env.step(action)
+        return self.transform(n_state), reward, done, info # 毎回のagentの状態に対して前処理(transform())を実施したい
+        
+    def transform(self, state): 
+        """
+        前処理メソッド:要オーバーライド
+        """
+        # class ImaiObserver(Observer)を後で作ったときに，def transform(...)をImaiObserverの中につくる
+        # ImaiObserver の中に def transform(...) がないと　，ここの transform が呼ばれてエラーとなる
+        # オーバーライド：親クラスにあるメソッドを子クラスで再定義することによって、子クラス上で親クラスのメソッドを上書きすること
+        raise NotImplementedError("You have to implement transform method")
+
+class Logger():
+
+    def __init__(self, log_dir="", dir_name=""):
+        self.log_dir = log_dir
+        if not log_dir:
+            self.log_dir = os.path.join(os.path.dirname(__file__), "logs")#C:user/toda/samplelogs
+        if not os.path.exists(self.log_dir):
+            os.mkdir(self.log_dir)
+
+        if dir_name: # dir_name が空じゃないとき
+            self.log_dir = os.path.join(self.log_dir, dir_name)
+            if not os.path.exists(self.log_dir):
+                os.mkdir(self.log_dir)
+
+        self._callback = tf.compat.v1.keras.callbacks.TensorBoard(
+                            self.log_dir)
+
+    @property
+    def writer(self):
+        return self._callback.writer
+    
+    def set_model(self, model):
+        self._callback.set_model(model)
+        
+    def path_of(self, file_name):
+        return os.path.join(self.log_dir, file_name)
+    
+    def describe(self, name, values, episode=-1, step=-1):
+        """
+        valuesの平均値と分散を出力
+        """
+        mean = np.round(np.mean(values), 3)
+        std = np.round(np.std(values), 3)
+        desc = "{} is {} (+/-{})".format(name, mean, std)
+        if episode > 0:
+            print("At episode {}, {}".format(episode, desc))
+        elif step > 0:
+            print("At step {}, {}".format(step, desc))
+            
+    def plot(self, name, values, interval=10):
+        """
+        intervalごとの平均と分散を求めて、図を出力
+        """
+        indices = list(range(0, len(values), interval))
+        means = []
+        stds = []
+        for i in indices:
+            _values = values[i:(i + interval)]
+            means.append(np.mean(_values))
+            stds.append(np.std(_values))
+        means = np.array(means)
+        stds = np.array(stds)
+        plt.figure()
+        plt.title("{} History".format(name))
+        plt.grid()
+        plt.fill_between(indices, means - stds, means + stds,
+                         alpha=0.1, color="g")
+        plt.plot(indices, means, "o-", color="g",
+                 label="{} per {} episode".format(name.lower(), interval))
+        plt.legend(loc="best")
+        plt.show()
+
+    def write(self, index, name, value):
+        """
+        TenserBoardへ値出力
+        """
+        summary = tf.compat.v1.Summary()
+        summary_value = summary.value.add()
+        summary_value.tag = name
+        summary_value.simple_value = value
+        self.writer.add_summary(summary, index)
+        self.writer.flush()
+        
+    def write_image(self, index, frames):
+        """
+        エージェントのstateを描画
+        Deal with a 'frames' as a list of sequential gray scaled image.
+        """
+        # Deal with a 'frames' as a list of sequential gray scaled image.
+        last_frames = [f[:, :, -1] for f in frames]
+        if np.min(last_frames[-1]) < 0:
+            scale = 127 / np.abs(last_frames[-1]).max()
+            offset = 128
+        else:
+            scale = 255 / np.max(last_frames[-1])
+            offset = 0
+        channel = 1  # gray scale
+        tag = "frames_at_training_{}".format(index)
+        values = []
+
+        for f in last_frames:
+            height, width = f.shape
+            array = np.asarray(f * scale + offset, dtype=np.uint8)
+            image = Image.fromarray(array)
+            output = io.BytesIO()
+            image.save(output, format="PNG")
+            image_string = output.getvalue()
+            output.close()
+            image = tf.compat.v1.Summary.Image(
+                        height=height, width=width, colorspace=channel,
+                        encoded_image_string=image_string)
+            value = tf.compat.v1.Summary.Value(tag=tag, image=image)
+            values.append(value)
+
+        summary = tf.compat.v1.Summary(value=values)
+        self.writer.add_summary(summary, index)
+        self.writer.flush()
