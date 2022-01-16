@@ -127,7 +127,7 @@ class ValueFunctionTrainer(Trainer):
         self.reward_log.append(sum(rewards))
         
         if self.is_event(episode, self.report_interval):
-            recent_rewards = self.reward_log[-self.report_interval]
+            recent_rewards = self.reward_log[-self.report_interval:]
             self.logger.describe("reward", recent_rewards, episode=episode)
                 
 def main(play):
