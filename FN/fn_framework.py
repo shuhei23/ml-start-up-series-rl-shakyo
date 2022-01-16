@@ -169,6 +169,9 @@ class Trainer():
                     self.training = True
             
                 self.step(i, step_count, agent, e)
+
+                s = n_state
+                step_count += 1
                 
             else:   # done == True;
             # https://www.javadrive.jp/python/for/index1.html#section2
