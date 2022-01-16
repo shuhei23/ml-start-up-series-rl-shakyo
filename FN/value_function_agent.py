@@ -93,3 +93,62 @@ class ValueFunctionAgent(FNAgent): # FNAgent(親/super)を継承したValueFunct
         estimateds = np.array(estimateds)
         states = self.model.named_steps["scaler"].transform(states)
         self.model.named_steps["estimator"].partial_fit(states, estimateds) # パラメータを更新
+    
+class CartPoleObsever(Observer):
+    
+    def transform(self, state):
+        """
+        stateを1×4のベクトルに成形
+        # state = [カートの位置, 加速度, ポールの角度, ポールの倒れる速度（角速度）]
+        # 上のは誤植っぽい，state = [カートの位置, 速度, ポールの角度, ポールの倒れる速度（角速度）]
+        # cf. https://github.com/openai/gym/wiki/CartPole-v0の Observation 
+        """
+        return np.array(state).reshape((1, -1)) # ベクトルに変換（reshape((a,-1))でaの要素を持つベクトルに自動計算する）
+
+class ValueFunctionTrainer(Trainer):
+    
+    def train(self, env, episode_count=220, epsilon=0.1, initial_cout=-1,
+              render=False):
+        actions = list(range(env.action_space.n)) # env.action_space.n は とれるactionの数
+        agent = ValueFunctionAgent(epsilon, actions)
+        self.train_loop(env, agent, episode_count, initial_cout, render)
+        return agent
+    
+    def begin_train(self, episode, agent):
+        agent.initialize(self.experiences)
+        
+    def step(self, episode, step_cout, agent, experience):
+        if self.training:
+            batch = random.sample(self.experiences, self.batch_size) # self.experiences から self.batch_size だけランダムに出力(出力はリスト)
+            agent.update(batch, self.gamma)
+            
+    def episode_end(self, episode, step_count, agent):
+        rewards = [e.r for e in self.get_recent(step_count)] # e = Experience(s, a, reward, n_state, done)
+        self.reward_log.append(sum(rewards))
+        
+        if self.is_event(episode, self.report_interval):
+            recent_rewards = self.reward_log[-self.report_interval]
+            self.logger.describe("reward", recent_rewards, episode=episode)
+                
+def main(play):
+    env = CartPoleObsever(gym.make("CartPole-v0"))
+    trainer = ValueFunctionTrainer()
+    path = trainer.logger.path_of("value_function_agent.pkl")
+    
+    if play:
+        agent = ValueFunctionAgent.load(env, path)
+        agent.play(env)
+    else:
+        trained = trainer.train(env)
+        trainer.logger.plot("Rewards", trainer.reward_log,
+                            trainer.report_interval)
+        trained.save(path)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="VF Agent")
+    parser.add_argument("--play", action="store_true",
+                        help="play with train model")
+    args = parser.parse_args()
+    # コマンドラインで実行時のオプションを自作してるっぽい
+    # https://docs.python.org/ja/3/library/argparse.html
+    main(args.play)

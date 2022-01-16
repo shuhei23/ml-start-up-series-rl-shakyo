@@ -127,16 +127,20 @@ class Trainer():
         self.training_count = 0
         self.reward_log = []
 
-    @property #propertyをつけるとこのメソッドを変数みたいに扱える trainer.trainer_name <-○ / trainer.trainer_name() <-× / trainer.trainer_name = ”hoge” <- × 
+    @property
     def trainer_name(self):
-        class_name = self.__class__.__name # 予約語
+        # propertyをつけるとこのメソッドを変数みたいに扱える trainer.trainer_name <-○ / trainer.trainer_name() <-× / trainer.trainer_name = ”hoge” <- × 
+        class_name = self.__class__.__name__ # 予約語
         snaked = re.sub("(.)([A-Z][a-z]+)",r"\1_\2", class_name)
         snaked = re.sub("([a-z0-9])([A-Z])",r"\1_\2", snaked).lower()
         snaked = snaked.replace("_trainer", "")
         return snaked
     
     def train_loop(self, env, agent, episode = 200, initial_count = -1, 
-                    render = False, observe_interval = 0): 
+                    render = False, observe_interval = 0):
+        """
+        episode回数分学習する
+        """ 
         self.experiences = deque(maxlen=self.buffer_size)
         self.training = False
         self.training_count = 0
@@ -197,6 +201,9 @@ class Trainer():
         return True if count != 0 and count % interval == 0 else False
                 
     def get_recent(self, count):
+        """
+        countで指定されたデータ数だけ直近のexperiencesを取ってくる
+        """
         recent = range(len(self.experiences) - count, len(self.experiences))
         return [self.experiences[i] for i in recent]
 
