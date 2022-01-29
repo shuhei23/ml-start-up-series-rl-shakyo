@@ -85,8 +85,8 @@ class FNAgent():
         """
         epsilonの確率でランダム行動(探索)
         1-epsilonの確率では、
-        　予測するのが行動確率の場合は、その確立に従って行動
-        　それ以外は価値最大の行動をとる（活用）
+         予測するのが行動確率の場合は、その確立に従って行動
+         それ以外は価値最大の行動をとる（活用）
         """
         if np.random.random() < self.epsilon or not self.initialized:
             return np.random.randint(len(self.actions))
@@ -99,6 +99,9 @@ class FNAgent():
                 return np.argmax(estimates)
 
     def play(self, env, episode_count=5, render=True):
+        """
+        policy や q関数の更新とかはせず，ただ動かすだけ
+        """
         for e in range(episode_count):
             s = env.reset()
             done = False
