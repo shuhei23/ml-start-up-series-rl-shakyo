@@ -99,6 +99,9 @@ class FNAgent():
                 return np.argmax(estimates)
 
     def play(self, env, episode_count=5, render=True):
+        """
+        policy や q関数の更新とかはせず，ただ動かすだけ
+        """
         for e in range(episode_count):
             s = env.reset()
             done = False

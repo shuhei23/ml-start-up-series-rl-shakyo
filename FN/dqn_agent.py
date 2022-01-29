@@ -18,6 +18,9 @@ class DeepQNetworkAgent(FNAgent):
         # _を付けるとfrom func import* で呼ばれることが無くなる。ただclassz._func()だと呼べる
 
     def initialize(self, experiences, optimizer):
+        """
+        状態の数に基づいてNNのモデルを設定
+        """
         feature_shape = experiences[0].s.shape #状態stateの行列のサイズを取っている
         self.make_model(feature_shape)
         self.model.compile(optimizer, loss="mse") #KerasのAPI:学習のためのモデルを設定する
@@ -84,7 +87,7 @@ class DeepQNetworkAgent(FNAgent):
         return loss 
 
     def update_teacher(self):
-        self.__teacher_model.set_weights(self.model.get_weights())
+        self._teacher_model.set_weights(self.model.get_weights())
         
 class DeepQNetworkAgentTest(DeepQNetworkAgent):
     """
@@ -135,3 +138,135 @@ class CatcherObserver(Observer):
         feature = np.array(self._frames) # dequeのframesをnp.arrayに変換
         feature = np.transpose(feature, (1, 2, 0)) #(frames, widths, height) -> (height, widths, frames)
         return feature
+
+class DeepQNetworkTrainer(Trainer):
+
+    def __init__(self, buffer_size=5000, batch_size=32,
+                gamma=0.09, initial_epsilon=0.5, final_epsilon=1e-3,
+                learning_rate=1e-3, teacher_update_freq=3, report_interval=10,
+                log_dir="", file_name=""):
+        super().__init__(buffer_size,  batch_size, gammma, report_interval, log_dir)
+        # 以下引数の順番で並び替えた
+        self.initial_epsilon = initial_epsilon
+        self.final_epsilon   = final_epsilon
+        self.learning_rate   = learning_rate
+        self.teacher_update_freq = teacher_update_freq
+        self.file_name = file_name if file_name else "dqn_agent.h5"
+
+        self.loss = 0
+        self.training_episode = 0
+        self._max_reward = -10
+
+    def train(self, env, episode_count=1200, initial_count=200,
+            test_mode=False, render = False, observe_interval=100):
+        
+        actions = list(range(env.action_space.n))
+        if not test_mode:
+            agent = DeepQNetworkAgent(1.0, actions) # DeepQNetworkAgent は本来のNN, 1.0はepsilonの値
+        else:
+            agent = DeepQNetworkAgentTest(1.0, actions) # DeepQNetworkAgetTestはただのパーセプトロン
+            observe_interval = 0
+
+        self.training_episode = episode_count
+        
+        self.train_loop(env, agent, episode_count, initial_count, render, observe_interval)
+        # initial_count > i のときはNNの更新をしない
+
+        return agent
+        
+    def episode_begin(self, episode, agent):
+        """
+        エピソード開始時処理
+        ロスをゼロにする
+        """
+        self.loss = 0
+    
+    def begin_train(self, episode, agent):
+        """
+        トレイン開始時処理
+        NNのモデル生成、optimazer設定
+        """
+        # https://keras.io/ja/optimizers/ ここから選べる
+        optimizer = K.optimizers.Adam(lr=self.learning_rate, clipvalue=1.0)
+        agent.initialize(self.experiences, optimizer)
+
+        self.logger.set_model(agent.model)
+        agent.epsilon = self.initial_epsilon
+        self.training_episode -= episode # trainしないでデータ貯める間は引いてない
+
+    def step(self, episode, step_count, agent, experience):
+        """
+        step毎の処理
+        train中だったら、モデル更新
+        """
+        if self.training:
+            batch = random.sample(self.experiences, self.batch_size)
+            self.loss += agent.update(batch, self.gamma)
+
+    
+    def episode_end(self, episode, step_count, agent):
+        """
+        エピソードが終わったときの処理
+        ・train中は直近step_count数のエピソードの報酬がより良い場合はモデルを保存する
+        ・update_teacher()
+        ・epsilon更新する
+        ・コンソールに結果出力
+        """
+        reward = sum([e.r for e in self.get_recent(step_count)])    # 直近step_count数分のrewardを合計
+        self.loss /= step_count
+        self.reward_log.append(reward)
+
+        if self.training:
+            self.logger.write(self.training_count, "loss", self.loss)
+            self.logger.write(self.training_count, "reward", reward)
+            self.logger.write(self.training_count, "epsilon", agent.epsilon)
+
+            if reward > self._max_reward:
+                agent.save(self.logger.path(self.file_name)) # 報酬がよりよいモデルの時は保存する
+                self._max_reward = reward
+
+            if self.is_event(self.training_count, self.teacher_update_freq):
+                agent.update_teacher()
+        
+            # epsilonの更新(学習が進むにつれ"ランダムに動く確率"を減らす)
+            # 反比例の図の第四象限のように減る
+            # agent.epsilon - diff/(self.training_episode)
+            diff = (self.initial_epsilon - self.final_epsilon)
+            decay = diff / self.training_episode
+            agent.epsilon = max(agent.epsilon - decay, self.final_epsilon)
+
+        if self.is_event(episode, self.report_interval):
+            recent_rewards = self.reward_log[-self.report_interval:]
+            self.logger.describe("reward", recent_rewards, episode=episode)
+        
+def main(play, is_test):
+    """
+    play：play  with trained model
+    is_test：train by test mode
+    """
+    file_name = "dqn_agent.h5" if not is_test else "dqn_agent_test.h5"
+    trainer = DeepQNetwarkTrainer(file_name = file_name)
+    path = trainer.logger.path_of(tariner.file_name)
+
+    if is_test:
+        print("Train on test mode")
+        obs = gym.make("Cart-Pole-v0")
+        agent_class = DeepQNetworkAgentTest
+    else:
+        env = gym.make("Catcher-v0")
+        obs = CatcherObserver(env, 80, 80, 4)
+        agent_class = DeepQNetworkAgent #インスタンス生成じゃなくてクラスのポインタ渡し的な書き方
+    
+    if play:
+        agent = agent_class.load(obs, path) # load()は@classmethodなのでインスタンス生成してなくても呼べる
+        agent.play(obs, render=True)
+    else:
+        trainer.train(obs, test_mode=is_test)
+    
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="DQN Agent")
+    parser.add_argument("--play", action="store_true", help="play  with trained model")
+    parser.add_argument("--test", action="store_true", help="train by test mode")
+
+    args = parser.parse_args()
+    main(args.play, args.test)
