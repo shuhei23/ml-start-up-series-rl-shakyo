@@ -222,7 +222,7 @@ class DeepQNetworkTrainer(Trainer):
             self.logger.write(self.training_count, "epsilon", agent.epsilon)
 
             if reward > self._max_reward:
-                agent.save(self.logger.path(self.file_name)) # 報酬がよりよいモデルの時は保存する
+                agent.save(self.logger.path_of(self.file_name)) # 報酬がよりよいモデルの時は保存する
                 self._max_reward = reward
 
             if self.is_event(self.training_count, self.teacher_update_freq):
@@ -250,7 +250,7 @@ def main(play, is_test):
 
     if is_test:
         print("Train on test mode")
-        obs = gym.make("Cart-Pole-v0")
+        obs = gym.make("CartPole-v0")
         agent_class = DeepQNetworkAgentTest
     else:
         env = gym.make("Catcher-v0")
