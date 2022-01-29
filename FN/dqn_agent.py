@@ -145,7 +145,7 @@ class DeepQNetworkTrainer(Trainer):
                 gamma=0.09, initial_epsilon=0.5, final_epsilon=1e-3,
                 learning_rate=1e-3, teacher_update_freq=3, report_interval=10,
                 log_dir="", file_name=""):
-        super().__init__(buffer_size,  batch_size, gammma, report_interval, log_dir)
+        super().__init__(buffer_size,  batch_size, gamma, report_interval, log_dir)
         # 以下引数の順番で並び替えた
         self.initial_epsilon = initial_epsilon
         self.final_epsilon   = final_epsilon
@@ -245,8 +245,8 @@ def main(play, is_test):
     is_test：train by test mode
     """
     file_name = "dqn_agent.h5" if not is_test else "dqn_agent_test.h5"
-    trainer = DeepQNetwarkTrainer(file_name = file_name)
-    path = trainer.logger.path_of(tariner.file_name)
+    trainer = DeepQNetworkTrainer(file_name = file_name)
+    path = trainer.logger.path_of(trainer.file_name)
 
     if is_test:
         print("Train on test mode")
