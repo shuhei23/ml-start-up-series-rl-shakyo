@@ -160,7 +160,7 @@ class Trainer():
                 if render:
                     env.render()
                 if self.training and observe_interval > 0 and \
-                 (self.trainging_count == 1 or self.training_count % observe_interval == 0):
+                 (self.training_count == 1 or self.training_count % observe_interval == 0):
                     frames.append(s)
             
                 a = agent.policy(s)
