@@ -29,7 +29,7 @@ class ValueFunctionAgent(FNAgent): # FNAgent(親/super)を継承したValueFunct
         scaler = StandardScaler() # 正規化してくれる fit() を呼ぶ
         estimator = MLPRegressor(hidden_layer_sizes=(10,10), max_iter =1) # ノード数10の隠れ層を2つもつNN
         self.model = Pipeline([("scaler", scaler), ("estimator", estimator)]) # pipelineを作ると、そこに設定したものを後からpipelineごしに呼べる<https://dev.classmethod.jp/articles/create_pipeline_scikit-learn_pipeline/>
-
+        #  scaler = StandardScaler() も estimator = MLPRegressor も scikit-learn のものなので，パイプラインコマンド使えた
         states = np.vstack([e.s for e in experiences])
         # Experience = namedtuple("Experince",["s", "a", "r", "n_s", "d"])のsなので，状態変数の値
         self.model.named_steps["scaler"].fit(states)
