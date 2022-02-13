@@ -160,7 +160,7 @@ class Trainer():
                 if render:
                     env.render()
                 if self.training and observe_interval > 0 and \
-                 (self.training_count == 1 or self.training_count % observe_interval == 0):
+                 (self.trainging_count == 1 or self.training_count % observe_interval == 0):
                     frames.append(s)
             
                 a = agent.policy(s)
@@ -173,6 +173,9 @@ class Trainer():
                     self.training = True
             
                 self.step(i, step_count, agent, e)
+
+                s = n_state
+                step_count += 1
                 
                 s = n_state
                 step_count += 1

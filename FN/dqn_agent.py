@@ -141,7 +141,7 @@ class CatcherObserver(Observer):
 
 class DeepQNetworkTrainer(Trainer):
 
-    def __init__(self, buffer_size=50000, batch_size=32,
+    def __init__(self, buffer_size=5000, batch_size=32,
                 gamma=0.09, initial_epsilon=0.5, final_epsilon=1e-3,
                 learning_rate=1e-3, teacher_update_freq=3, report_interval=10,
                 log_dir="", file_name=""):
