@@ -40,7 +40,13 @@ from PIL import Image #画像処理ライブラリ Pillow
 import matplotlib.pyplot as plt
 from tensorflow.python.keras.backend_config import epsilon
 
-
+'''
+    状態(s)
+    行動(a)
+    報酬(r)
+    遷移先の状態(n_s)
+    エピソード終了フラグ(d)
+'''
 Experience = namedtuple("Experince",
                         ["s", "a", "r", "n_s", "d"])#Cの構造体のような，tuple は中身変更できない
 
