@@ -56,10 +56,10 @@ class PolicyGradientAgent(FNAgent): # クラスFNAgentを"継承"している
     def initialize(self, experiences, optimizer):
         states = np.vstack([e.s for e in experiences])
         feature_size = states.shape[1] # stateの列数 = 状態のパラメータ数
-        self.model = K.modes.Sequential([
+        self.model = K.models.Sequential([
             K.layers.Dense(10,activation = "relu", input_shape=(feature_size,)),
             K.layers.Dense(10,activation = "relu"),
-            K.layers.Dense(len(self.action), activation = "softmax")
+            K.layers.Dense(len(self.actions), activation = "softmax")
         ]) 
         self.set_updater(optimizer)
         self.scaler.fit(states) # 正規化
@@ -94,7 +94,7 @@ class PolicyGradientAgent(FNAgent): # クラスFNAgentを"継承"している
         updates = optimizer.get_updates(loss=loss, params=self.model.trainable_weights)
         self._updater = K.backend.function(
             inputs = [self.model.input, actions, rewards], 
-            ouput = [loss], 
+            outputs = [loss], 
             updates = updates # self._updater の上の updates にデータが溜まっていくっぽい
         )
 
