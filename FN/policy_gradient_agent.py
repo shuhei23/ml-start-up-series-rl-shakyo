@@ -43,13 +43,13 @@ class PolicyGradientAgent(FNAgent): # クラスFNAgentを"継承"している
         actions = list(range(env.action_space.n))
         # agent は PolicyGradientAgentのインスタンス
         agent = cls(actions) # cls(actions) は PolicyGradientAgent.__init__(actions) と同義
-        agent.model = K.models.loadMmodel(model_path)
+        agent.model = K.models.load_model(model_path)
         agent.initialized = True
         agent.scaler = joblib.load(agent.scaler_path(model_path))
         return agent
     
     def scaler_path(self, model_path):
-        fname, _ = os.path.splittext(model_path)
+        fname, _ = os.path.splitext(model_path)
         fname += "_scaler.pkl"
         return fname
 
