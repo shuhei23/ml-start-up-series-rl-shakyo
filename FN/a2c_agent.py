@@ -103,7 +103,7 @@ class ActorCriticAgent(FNAgent):
         
         updates = optimizer.get_updates(loss=loss, params=self.model.trainable_weights)
     
-        self._updater = K.backend.function(input=[self.model.input, actions, values], 
+        self._updater = K.backend.function(inputs=[self.model.input, actions, values], 
             outputs = [loss, policy_loss, value_loss, tf.reduce_mean(neg_logs), tf.reduce_mean(advantages), action_entoropy],
             updates = updates)
             # loss は無名関数
@@ -148,7 +148,7 @@ class SampleLayer(K.layers.Layer):
     def call(self, x):  # action_evals (行動価値) が x に来る
         # ノイズのっけて最大のxをとる
         # https://www.tensorflow.org/guide/keras/custom_layers_and_models?hl=ja
-        noise = tf.ramdom.uniform(tf.shape(x))
+        noise = tf.random.uniform(tf.shape(x))
         return tf.argmax(x - tf.math.log(-tf.math.log(noise)), axis = 1)
         # ノイズを乗っける理由の参考記事
         # https://qiita.com/motorcontrolman/items/587b532f7a493dfb591f
@@ -193,3 +193,191 @@ class ActorCriticAgentTest(ActorCriticAgent):
         
         # returnがないので，インスタンスの中身にmodelが出来あがる感じ
 
+class CatcherObserver(Observer):
+
+    def __init__(self, env, width, height, frame_count):
+        super().__init__(env)
+        self.width = width
+        self.height = height
+        self.frame_count = frame_count
+        self._frames = deque(maxlen = frame_count)
+
+    def transform(self, state):
+        """
+        前処理: -> dqn_agent.py と一緒
+        1. 画像をキューに貯める(初回は同じ画像を4枚コピー)
+        2. 画像キューをarray[height, widths, frames]にして返す
+        """
+        # RGBの配列(state)をグレースケールの画像に変換(grayed⇒resized)
+        grayed = Image.fromarray(state).convert("L") # L: 8bit グレイスケール
+        resized = grayed.resize((self.width, self.height)) # グレイスケール画像のリサイズ
+        # グレースケール画像のRBG値を0～1にスケーリング(resized⇒normalized)
+        resized = np.array(resized).astype("float")
+        normalized = resized / 255.0 #グレイスケールだから 0 ~ 1 の値になっているためfloatにキャストする
+        
+        if len(self._frames) == 0:
+            for i in range(self.frame_count):
+                self._frames.append(normalized)
+        else:
+            self._frames.append(normalized)
+        feature = np.array(self._frames) # dequeのframesをnp.arrayに変換
+        feature = np.transpose(feature, (1, 2, 0)) #(frames, widths, height) -> (height, widths, frames)
+        return feature
+
+class ActorCriticTrainer(Trainer):
+    def __init__(self, buffer_size = 256, batch_size =32, 
+                gamma = 0.99, learning_rate = 1e-3, 
+                report_interval = 10, log_dir = "",  file_name =""):
+        super().__init__(buffer_size, batch_size, gamma, 
+                       report_interval, log_dir)
+        self.file_name = file_name if file_name else "a2c_agent.h5"
+        self.learning_rate   = learning_rate
+        self.losses = {} # 辞書型
+        self.rewards = []
+        self._max_reward = -10
+    
+    def train(self, env, episode_count = 900, initial_count = 10, 
+            test_mode = False, render = False, observe_interval = 100):
+        actions = list(range(env.action_space.n))
+        # ポリモーフィズム どのインスタンスを生成するかによって処理が変わる
+        if not test_mode:
+            agent = ActorCriticAgent(actions) # 本来のCNN
+        else:
+            agent = ActorCriticAgentTest(actions) # 簡略化されたNN
+            observe_interval = 0 
+        self.training_episode = episode_count
+        
+        self.train_loop(env, agent, episode_count, initial_count, render, 
+                        observe_interval)
+        return agent
+
+    def episode_begin(self, episode, agent):
+        self.rewards = []
+
+    def step(self, episode, step_count, agent, experience):
+        """
+        step毎の処理
+        train中だったら、モデル更新
+
+        """
+        self.rewards.append(experience.r)
+        if not agent.initialized:
+            print("step is called under --agent.initialized = False -- ")
+            if len(self.experiences) < self.buffer_size:
+                print("--len(self.experiences) < self.buffer_size-- ")
+                return False
+            optimizer = K.optimizers.Adam(lr = self.learning_rate, clipnorm = 5.0)
+            agent.initialize(self.experiences, optimizer)
+            self.logger.set_model(agent.model)
+            self.training = True
+            self.experiences.clear()
+        else:
+            # print("step is called under --agent.initialized = True-- \n")
+            if len(self.experiences) < self.buffer_size:
+                return False
+            batch = self.make_batch(agent) # batch = [states, actions, values]
+            loss, lp, lv, p_ng, p_ad, p_en = agent.update(*batch) # agent.update(states, actions, values)
+            
+            # loss = policy_loss + value_loss_weight * value_loss - entoropy_weight * action_entoropy
+            self.losses["loss/total"] = loss 
+            self.losses["loss/policy"] = lp 
+            self.losses["loss/value"] = lv 
+            self.losses["policy/neg_log"] = p_ng 
+            self.losses["policy/advantage"] = p_ad 
+            self.losses["policy/entropy"] = p_en
+            self.experiences.clear()
+            # C では batch が 配列または構造体
+            # *batch = ポインタの中身， batch = batch[0]のポインタ(先頭のアドレス)
+            # int abc[20];
+            # int d = 1;
+            # double b = 10;
+            # void func(int *a, double &b){ b  = 10;}
+            # 
+            # func(abc)= func(&abc[0]) 
+            # func(&d) -> OK
+            # func(3) -> NG
+            # int batch
+            # void func(XX  *hensu1)
+            # struct _XX{
+            #     int a;
+            #     double b; 
+            # }XX;
+    
+    def make_batch(self, agent):
+        states = []
+        actions = []
+        values = []
+
+        experiences = list(self.experiences)
+        states = np.array([e.s for e in experiences])
+        actions = np.array([e.a for e in experiences])
+        
+        last = experiences[-1] # MATLABでいう experiences(end)
+        future = last.r if last.d else agent.estimate(last.n_s)
+        for e in reversed(experiences):
+            value = e.r
+            if not e.d:
+                value += self.gamma * future
+                # gamma * futute[0] + gamma * future[1] + ... 
+            values.append(value)
+            future = value
+        
+        values = np.array(list(reversed(values))) # np.arrayになった
+
+        scaler = StandardScaler()
+        values = scaler.fit_transform(values.reshape((-1, 1))).flatten()
+
+        return states, actions, values
+
+    def episode_end(self, episode, step_count, agent):
+        reward = sum(self.rewards)
+        self.reward_log.append(reward)
+
+        if agent.initialized:
+            self.logger.write(self.training_count, "reward", reward)
+            self.logger.write(self.training_count, "reward_max", max(self.rewards))
+
+            for k in self.losses:
+                self.logger.write(self.training_count, k, self.losses[k]) 
+
+            if reward > self._max_reward:
+                agent.save(self.logger.path_of(self.file_name))
+                self._max_reward = reward
+            
+        
+        if self.is_event(episode, self.report_interval):
+            recent_rewards = self.reward_log[-self.report_interval:]
+            self.logger.describe("reward", recent_rewards, episode = episode)
+
+def main(play, is_test):
+    """
+    play: play  with trained model
+    is_test: train by test mode
+    """
+    file_name = "a2c_agent.h5" if not is_test else "a2c_agent_test.h5"
+    trainer = ActorCriticTrainer(file_name=file_name)
+    path = trainer.logger.path_of(trainer.file_name)
+    agent_class = ActorCriticAgent
+    
+    if is_test:
+        print("Train on test mode")
+        obs = gym.make("CartPole-v0")
+        agent_class = ActorCriticAgentTest
+    else:
+        env = gym.make("Catcher-v0")
+        obs = CatcherObserver(env, 80, 80, 4)
+        trainer.learning_rate = 7e-5 # 後で変えて様子みてみる
+        
+    if play:
+        agent = agent_class.load(obs, path)
+        agent.play(obs, episode_count=10, render=True)
+    else:
+        trainer.train(obs, test_mode=is_test)            
+                          
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="A2C Agent")
+    parser.add_argument("--play", action="store_true", help="play with trained model")
+    parser.add_argument("--test", action="store_true", help="train by test mode")
+
+    args = parser.parse_args()
+    main(args.play, args.test)
