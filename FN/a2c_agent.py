@@ -258,18 +258,16 @@ class ActorCriticTrainer(Trainer):
         """
         step毎の処理
         train中だったら、モデル更新
-
+        cf. env.step (fn_framwork.pyで呼び出し) はアクションをとったときの実行しているゲーム側の処理
         """
         self.rewards.append(experience.r)
-        if not agent.initialized:
-            print("step is called under --agent.initialized = False -- ")
+        if not agent.initialized: # データためてるだけ
             if len(self.experiences) < self.buffer_size:
-                print("--len(self.experiences) < self.buffer_size-- ")
-                return False
+                return False # データためてるだけでおしまい
             optimizer = K.optimizers.Adam(lr = self.learning_rate, clipnorm = 5.0)
             agent.initialize(self.experiences, optimizer)
             self.logger.set_model(agent.model)
-            self.training = True
+            self.training = True　# トレーニングした
             self.experiences.clear()
         else:
             # print("step is called under --agent.initialized = True-- \n")
@@ -366,7 +364,7 @@ def main(play, is_test):
     else:
         env = gym.make("Catcher-v0")
         obs = CatcherObserver(env, 80, 80, 4)
-        trainer.learning_rate = 7e-5 # 後で変えて様子みてみる
+        trainer.learning_rate = 7e-5 # 後で変えて様子みてみるToDo
         
     if play:
         agent = agent_class.load(obs, path)
