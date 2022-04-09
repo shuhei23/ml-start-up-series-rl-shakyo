@@ -256,23 +256,23 @@ class ActorCriticTrainer(Trainer):
 
     def step(self, episode, step_count, agent, experience):
         """
-        step毎の処理
+        env.step()の直後に呼ぶ処理
         train中だったら、モデル更新
-
         """
         self.rewards.append(experience.r)
         if not agent.initialized:
-            print("step is called under --agent.initialized = False -- ")
+            # 未初期化の間はこっち
             if len(self.experiences) < self.buffer_size:
-                print("--len(self.experiences) < self.buffer_size-- ")
+                # バッファサイズ分溜まるまでは行動データ貯めるだけ
                 return False
-            optimizer = K.optimizers.Adam(lr = self.learning_rate, clipnorm = 5.0)
-            agent.initialize(self.experiences, optimizer)
-            self.logger.set_model(agent.model)
-            self.training = True
-            self.experiences.clear()
+            else:
+                # データ溜まったらagent初期化
+                optimizer = K.optimizers.Adam(lr = self.learning_rate, clipnorm = 5.0)
+                agent.initialize(self.experiences, optimizer)
+                self.logger.set_model(agent.model)
+                self.training = True
+                self.experiences.clear()
         else:
-            # print("step is called under --agent.initialized = True-- \n")
             if len(self.experiences) < self.buffer_size:
                 return False
             batch = self.make_batch(agent) # batch = [states, actions, values]
@@ -376,6 +376,7 @@ def main(play, is_test):
                           
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="A2C Agent")
+    # 以下をつけない場合ははじめて実行
     parser.add_argument("--play", action="store_true", help="play with trained model")
     parser.add_argument("--test", action="store_true", help="train by test mode")
 

@@ -183,9 +183,6 @@ class Trainer():
                 s = n_state
                 step_count += 1
                 
-                s = n_state
-                step_count += 1
-
             else:   # done == True;
             # https://www.javadrive.jp/python/for/index1.html#section2
                 self.episode_end(i, step_count, agent)
