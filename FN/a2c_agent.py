@@ -258,13 +258,13 @@ class ActorCriticTrainer(Trainer):
         """
         env.step()の直後に呼ぶ処理
         train中だったら、モデル更新
+        cf. env.step (fn_framwork.pyで呼び出し) はアクションをとったときの実行しているゲーム側の処理
         """
         self.rewards.append(experience.r)
-        if not agent.initialized:
-            # 未初期化の間はこっち
+        if not agent.initialized: # 未初期化の間はデータためてるだけ
             if len(self.experiences) < self.buffer_size:
-                # バッファサイズ分溜まるまでは行動データ貯めるだけ
-                return False
+                return False # バッファサイズ分溜まるまではデータためてるだけでおしまい
+
             else:
                 # データ溜まったらagent初期化
                 optimizer = K.optimizers.Adam(lr = self.learning_rate, clipnorm = 5.0)
@@ -366,7 +366,7 @@ def main(play, is_test):
     else:
         env = gym.make("Catcher-v0")
         obs = CatcherObserver(env, 80, 80, 4)
-        trainer.learning_rate = 7e-5 # 後で変えて様子みてみる
+        trainer.learning_rate = 7e-5 # 後で変えて様子みてみるToDo
         
     if play:
         agent = agent_class.load(obs, path)
