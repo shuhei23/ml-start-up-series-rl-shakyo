@@ -267,7 +267,7 @@ class ActorCriticTrainer(Trainer):
             optimizer = K.optimizers.Adam(lr = self.learning_rate, clipnorm = 5.0)
             agent.initialize(self.experiences, optimizer)
             self.logger.set_model(agent.model)
-            self.training = True　# トレーニングした
+            self.training = True # トレーニングした
             self.experiences.clear()
         else:
             # print("step is called under --agent.initialized = True-- \n")
