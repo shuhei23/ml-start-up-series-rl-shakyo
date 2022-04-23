@@ -147,8 +147,8 @@ class Model():
             return result'''
         
         for i in range(count):
-            state = np.random.choise(states)
-            action = np.random.choise(actions(state))
+            state = np.random.choice(states)
+            action = np.random.choice(actions(state))
             # actions には今までにとったことのないaction (history[state][action] = 0) ものは含まれない．
             next_state = self.transit(state, action)
             reward = self.reward(state, action)
