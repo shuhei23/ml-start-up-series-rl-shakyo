@@ -95,7 +95,7 @@ class Model():
         '''
 
     def update(self, state, action, reward, next_state):
-        self.transit_count[state][action][next_state] += 1
+        self.transit_count[state][action][next_state] += 1 # (x(k+1)|x(k),u(k))の遷移した回数を記憶
         self.total_reward[state][action] += reward
         self.history[state][action] += 1 # 何回その状況(state(string型文字列))で行動(action)をとったか
         print("-- update method is called -- ") # デバッグ用に書いた
@@ -105,6 +105,9 @@ class Model():
         # self.history[0][1] += 1 
 
     def transit(self, state, action):
+        """
+        今までの遷移(x(k+1)|x(k),u(k))の回数の平均から遷移確率を推定
+        """
         counter = self.transit_count[state][action]
         states = []
         counts = []
@@ -113,8 +116,56 @@ class Model():
             counts.append(c)
         probs = np.array(counts) / sum(counts)
         return np.random.choice(states, p=probs)
+        
     
-    def reward(self):
-        pass
-    def simulate():
-        pass
+    def reward(self, state , action): # \sum_{k=0}^{N-1} g(x,u) <- ステージコストの評価 
+        total_reward = self.total_reward[state][action]
+        total_count = self.history[state][action] # (state, action) の組の登場回数をカウントしたもの
+        return total_reward / total_count # 今までの経験reward の平均で推定
+
+    def simulate(self, count):
+        """
+        モデルを使った学習。
+        count : モデルを使って何回学習させるか
+        """
+        states = list(self.transit_count.keys()) # 0, 1, ..., 
+        actions = lambda s: [a # <- return  
+                                for a, c in self.history[s].most_common()
+                                if c > 0 ] # lambda は無名関数
+                            # self.history[s].most_common() は state s で 今までにとったactionを出現回数順にならべた
+                            # [('3', 10), ('0', 3),  ('1', 2), ('2', 1),]
+
+        # lamda(無名関数) 名前 = lambda 引数, 引数, ...: 式
+        # 1. self.history[s] であるstateの時に action を取った回数が求まる。
+        # 2. .most_common() で 回数が多い順に a:行動 c:回数 -> ('3', 10) を取得
+        # 3. 取得されたa:行動 c:回数を if c > 0 で評価して真なら次の処理に進む 偽なら1にcontinue
+        # 4. 取得されたa:行動 c:回数 に対して return a を している
+        '''def actions(state):
+            result = []
+            for a , c in self.history[state].most_common()
+                if(c > 0):
+                    result.append(a)
+            return result'''
+        
+        for i in range(count):
+            state = np.random.choise(states)
+            action = np.random.choise(actions(state))
+            # actions には今までにとったことのないaction (history[state][action] = 0) ものは含まれない．
+            next_state = self.transit(state, action)
+            reward = self.reward(state, action)
+
+            yield state, action, reward, next_state
+
+def main(steps_in_model):
+    env = gym.make("FrozenLakeEazy-v0")
+    agent = DynaAgent()
+    agent.learn(env, steps_in_model = steps_in_model)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Dyna Agent")
+    parser.add_argument("--modelstep", type=int, default=-1,
+                        help = "step count in the model (int)")
+    # --modelstepを与えない場合、モデルを使った学習をしない。
+
+    args = parser.parse_args()
+    main(args.modelstep)
