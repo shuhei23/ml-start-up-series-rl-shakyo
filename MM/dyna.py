@@ -1,10 +1,9 @@
 import argparse
-from importlib_metadata import entry_points
 import numpy as np
 from collections import defaultdict, Counter
 import gym
 from gym.envs.registration import register
-register(id="FrozenLakeEasy-v0", entry_points="gym.envs.toy_text:FrozenLakeEnv",
+register(id="FrozenLakeEasy-v0", entry_point="gym.envs.toy_text:FrozenLakeEnv",
          kwargs={"is_slippery": False})
 
 class DynaAgent():
@@ -15,7 +14,7 @@ class DynaAgent():
         self.value = None
         
     def policy(self, state):
-        if np.random.random < self.epsilon:
+        if np.random.random() < self.epsilon:
             return np.random.randint(len(self.actions))
         else:
             if sum(self.value[state]) == 0:
@@ -157,7 +156,7 @@ class Model():
             yield state, action, reward, next_state
 
 def main(steps_in_model):
-    env = gym.make("FrozenLakeEazy-v0")
+    env = gym.make("FrozenLakeEasy-v0")
     agent = DynaAgent()
     agent.learn(env, steps_in_model = steps_in_model)
 
