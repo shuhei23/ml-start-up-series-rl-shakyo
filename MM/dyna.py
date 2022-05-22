@@ -91,16 +91,25 @@ class Model():
                 '3' : 0
             },
         }
+
+        実行結果例
+        history = 
+        defaultdict(<class 'collections.Counter'>, 
+        {0: Counter({1: 2, 3: 2, 0: 1, 2: 1}), 
+         4: Counter({0: 3, 2: 1, 1: 1}),
+         1: Counter({1: 1}),
+         8: Counter({1: 1})})
+
         '''
 
     def update(self, state, action, reward, next_state):
         self.transit_count[state][action][next_state] += 1 # (x(k+1)|x(k),u(k))の遷移した回数を記憶
         self.total_reward[state][action] += reward
         self.history[state][action] += 1 # 何回その状況(state(string型文字列))で行動(action)をとったか
-        print("-- update method is called -- ") # デバッグ用に書いた
-        print(state)
-        print(action)
-        print(self.history)
+        # print("-- update method is called -- ") # デバッグ用に書いた
+        # print(state)
+        # print(action)
+        # print(self.history)
         # self.history[0][1] += 1 
 
     def transit(self, state, action):
