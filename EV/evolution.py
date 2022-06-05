@@ -1,6 +1,7 @@
 from locale import normalize
 import os
 import argparse
+from matplotlib import colors
 import numpy as np
 from sklearn.externals.joblib import Parallel, delayed
 from PIL import Image
@@ -9,7 +10,7 @@ import gym
 
 # Disable TensorFlow GPU for parallel excecution
 if os.name == "nt":
-    os.eviron["CUDA_VISIBLE_DEVICE"] = "-1"
+    os.environ["CUDA_VISIBLE_DEVICE"] = "-1"
 else:
         os.environ["CUDA_VISIBLE_DEVICE"] = ""
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
@@ -183,10 +184,117 @@ class EvolutionalTrainer():
         # with Paralell(n_jobs=-1) as parallel: # -1 は自動設定の意味，コア数に応じて勝手にジョブ割り振る
         #    for e in range(epoch):
         for e in range(epoch):
-            experiment = delayed(EvolutionalTrainer.run_agent)
+            #experiment = delayed(EvolutionalTrainer.run_agent)
             results = Parallel(n_jobs=-1)(delayed(EvolutionalTrainer.run_agent)(episode_per_agent, self.weights, self.sigma) for p in range(self.population_size))
             self.update(results)
             self.log()
         
         agent.model.set_weights(self.weights)
         return agent
+
+    @classmethod
+    def make_env(cls):
+        return CatcherObserser(width=50, height=50, frame_count=5)
+
+    @classmethod
+    def run_agent(cls, episode_per_agent, base_weights, sigma, max_step=1000):
+        """
+        sigma：weightを更新するパラメータ
+        """
+        env = cls.make_env()
+        actions = list(range(env.action_space.n))
+        agent = EvolutionalAgent(actions)
+
+        noises = []
+        new_weights = []
+
+        # 1. Make weight.
+        for w in base_weights:
+            noise = np.random.randn(*w.shape) # ndarray.shape はndarrayの行数、*はListのアンパック
+            new_weights.append(w + sigma * noise) 
+            noises.append(noise)
+
+        # 2. Test Play.
+        total_reward = 0
+
+        for e in range(episode_per_agent):
+            s = env.reset()
+            if agent.model is None:
+                agent.initialize(s, new_weights)
+            done = False
+            step = 0
+            while not done and step < max_step:
+                a = agent.policy(s)
+                n_state, reward, done, info = env.step(a)
+                total_reward += reward
+                s = n_state
+                step += 1
+
+        reward = total_reward / episode_per_agent
+        return reward, noises
+
+    def update(self, agent_results):
+        """
+        agent_results = [[reward_0, noises_0],[reward_1, noises_1], ... [reward_n, noises_n]]
+        """
+        rewards = np.array([r[0] for r in agent_results])
+        noises = np.array([r[1] for r in agent_results])
+        normalized_rs = (rewards - rewards.mean()) / rewards.std() # 変化率が大きいものを貢献度が高いとする
+        print("normalized_rs = ",normalized_rs)
+        print("normalized_rs.shape = ",normalized_rs.shape)
+        # normalized_rs は　20要素のベクトル
+        # 3. Update base weights.
+        new_weights = []
+        print("self.weights = ",self.weights)
+        
+        for i, w in enumerate(self.weights):    # enumerate()は要素とインデックスを返す
+        # w は横ベクトル (1 \times 3) 
+        # normalized_rs は 行列 (N \times 3)
+            print("update i = ",i," STEP")
+            noise_at_i  = np.array([n[i] for n in noises])
+            rate = self.learning_rate / (self.population_size * self.sigma)
+            w = w + rate * np.dot(noise_at_i.T, normalized_rs).T
+            # rate: スカラー
+            # 
+            print("w = ",w)
+            new_weights.append(w)
+        print("new_weights = ",new_weights)
+        self.weights = new_weights
+        self.reward_log.append(rewards)
+   
+    def log(self):
+        rewards = self.reward_log[-1]
+        print("Epoch {}: reward {:.3}(max:{}, min:{})".format(len(self.reward_log), rewards.mean(), rewards.max(), rewards.min()))
+        #    ., print("reward = {:.3}".format(12345.6789)) -> reward = 1.23e+04
+
+    def plot_rewards(self):
+        np.indices = range(len(self.reward_log))
+        means = np.array([rs.mean() for rs in self.reward_log])
+        stds = np.array([rs.std() for rs in self.reward_log])
+        plt.figure()
+        plt.title("Reward History")
+        plt.grid()
+        plt.fill_bitween(np.indices, means - stds, means + stds, alpha=0.1 , color = "g")
+        plt.plot(np.indices, means, "o-", color = "g", label = "reward")
+        plt.legend(loc = "best")
+        plt.show()       
+    
+def main(play):
+    model_path = os.path.join(os.path.dirname(__file__), "ev_agent.h5")
+
+    
+    if play:    
+        env = EvolutionalTrainer.make_env()    
+        agent = EvolutionalAgent.load(env, model_path)    
+        agent.play(env, episode_count=5, render=True)
+    else:    
+        trainer = EvolutionalTrainer()    
+        trained = trainer.train()    
+        trained.save(model_path)    
+        trainer.plot_rewards()
+        
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Evolurional Agent")
+    parser.add_argument("--play", action="store_true",help="play with trained model")
+    args = parser.parse_args()
+    main(args.play)

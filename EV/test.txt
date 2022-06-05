@@ -1,0 +1,107 @@
+pygame 1.9.6
+Hello from the pygame community. https://www.pygame.org/contribute.html
+couldn't import doomish
+Couldn't import doom
+normalized_rs =  [ 0.49618606 -0.60644963 -0.60644963 -0.60644963 -0.60644963 -0.60644963
+  0.49618606 -0.60644963  2.70145745  0.49618606 -0.05513178 -0.60644963
+  2.70145745 -0.60644963 -0.60644963 -0.60644963  0.49618606 -0.60644963
+ -0.05513178 -0.60644963]
+normalized_rs.shape =  (20,)
+update i =  0  STEP
+update i =  1  STEP
+update i =  2  STEP
+update i =  3  STEP
+new_weights =  [array([
+      [[[ 0.19217836,  0.26778214,  0.02018917]],
+
+        [[ 0.02663989, -0.19118584,  0.13335975]],
+
+        [[-0.26730397,  0.13297866,  0.18070493]],
+
+        [[-0.11616613, -0.09020494,  0.15987924]],
+
+        [[-0.16011718, -0.16767549, -0.11877476]]],
+
+
+       [[[ 0.12407996, -0.11484275,  0.18103356]],
+
+        [[ 0.26416364,  0.20184825,  0.11534043]],
+
+        [[-0.18960021, -0.10150887,  0.12791215]],
+
+        [[-0.17416663,  0.19111074,  0.1302683 ]],
+
+        [[ 0.20568295,  0.10209128,  0.11506979]]],
+
+
+       [[[ 0.11694186, -0.14001807,  0.22550986]],
+
+        [[-0.04318288,  0.00538299, -0.21861838]],
+
+        [[-0.23058205, -0.03439492,  0.1920627 ]],
+
+        [[-0.0865433 , -0.03176038, -0.10824672]],
+
+        [[-0.14932927,  0.14667935, -0.11662331]]],
+
+
+       [[[ 0.02509638, -0.05411967,  0.14554847]],
+
+        [[-0.06804178,  0.12919081, -0.15808086]],
+
+        [[-0.11615994, -0.18357189,  0.02985056]],
+
+        [[-0.14488988,  0.00818937, -0.12196116]],
+
+        [[ 0.08797175,  0.25667321, -0.10207825]]],
+
+
+       [[[ 0.26188455, -0.22484051, -0.21033697]],
+
+        [[-0.01684878,  0.09265582,  0.01014096]],
+
+        [[-0.00734727,  0.17561886, -0.01786989]],
+
+        [[ 0.08967373,  0.07635765,  0.10238164]],
+
+        [[-0.105187  , -0.11850935, -0.14351715]]]
+        ]),
+    array([-0.01160758,  0.05317581,  0.00852749]), array([[ 0.09863239, -0.08146264, -0.11688944],
+       [-0.03660416, -0.05389344,  0.05600371],
+       [ 0.01237965, -0.01379636,  0.0679155 ],
+       ...,
+       [-0.07116186, -0.06611471,  0.01341056],
+       [-0.00196184,  0.00258452, -0.01088784],
+       [-0.0831377 , -0.0113901 , -0.13509869]]), array([ 0.0027967 , -0.05206008, -0.03467532])]
+pygame 1.9.6
+Hello from the pygame community. https://www.pygame.org/contribute.html
+couldn't import doomish
+Couldn't import doom
+pygame 1.9.6
+Hello from the pygame community. https://www.pygame.org/contribute.html
+couldn't import doomish
+Couldn't import doom
+pygame 1.9.6
+Hello from the pygame community. https://www.pygame.org/contribute.html
+couldn't import doomish
+Couldn't import doom
+pygame 1.9.6
+Hello from the pygame community. https://www.pygame.org/contribute.html
+couldn't import doomish
+Couldn't import doom
+pygame 1.9.6
+Hello from the pygame community. https://www.pygame.org/contribute.html
+couldn't import doomish
+Couldn't import doom
+pygame 1.9.6
+Hello from the pygame community. https://www.pygame.org/contribute.html
+couldn't import doomish
+Couldn't import doom
+pygame 1.9.6
+Hello from the pygame community. https://www.pygame.org/contribute.html
+couldn't import doomish
+Couldn't import doom
+pygame 1.9.6
+Hello from the pygame community. https://www.pygame.org/contribute.html
+couldn't import doomish
+Couldn't import doom
