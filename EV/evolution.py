@@ -179,7 +179,7 @@ class EvolutionalTrainer():
         s = env.reset()
         agent = EvolutionalAgent(actions)
         agent.initialize(s)
-        self.weights = agent.model.get_weights()
+        self.weights = agent.model.get_weights() # NNの各層の重みパラメタ
 
         # with Paralell(n_jobs=-1) as parallel: # -1 は自動設定の意味，コア数に応じて勝手にジョブ割り振る
         #    for e in range(epoch):
@@ -238,27 +238,30 @@ class EvolutionalTrainer():
         agent_results = [[reward_0, noises_0],[reward_1, noises_1], ... [reward_n, noises_n]]
         """
         rewards = np.array([r[0] for r in agent_results])
-        noises = np.array([r[1] for r in agent_results])
+        noises = np.array([r[1] for r in agent_results]) # 角層の重み* population_size (=20) 分のノイズがまとめて入っている
         normalized_rs = (rewards - rewards.mean()) / rewards.std() # 変化率が大きいものを貢献度が高いとする
-        print("normalized_rs = ",normalized_rs)
-        print("normalized_rs.shape = ",normalized_rs.shape)
+        # print("normalized_rs = ",normalized_rs)
+        # print("normalized_rs.shape = ",normalized_rs.shape)
         # normalized_rs は　20要素のベクトル
         # 3. Update base weights.
         new_weights = []
-        print("self.weights = ",self.weights)
+        # print("self.weights = ",self.weights)
         
         for i, w in enumerate(self.weights):    # enumerate()は要素とインデックスを返す
+        # 層ごとにweightを更新
         # w は横ベクトル (1 \times 3) 
-        # normalized_rs は 行列 (N \times 3)
-            print("update i = ",i," STEP")
-            noise_at_i  = np.array([n[i] for n in noises])
+        # normalized_rs は 行列 (N \times 3)，各population に対する重み
+            # print("update i = ",i," STEP")
+            noise_at_i  = np.array([n[i] for n in noises]) # i層目のノイズ[0:19]
             rate = self.learning_rate / (self.population_size * self.sigma)
-            w = w + rate * np.dot(noise_at_i.T, normalized_rs).T
+            w = w + rate * np.dot(noise_at_i.T, normalized_rs).T    #np.dotは内積
+            # normalized_rs は 各population の感度のようなもの，rewardが大きく変化しそうな パラメータを
+            # 大きく変化させようということ，noize_at_i はガウシアンノイズなので，方向は考えていない
             # rate: スカラー
             # 
-            print("w = ",w)
+            # print("w = ",w)
             new_weights.append(w)
-        print("new_weights = ",new_weights)
+        # print("new_weights = ",new_weights)
         self.weights = new_weights
         self.reward_log.append(rewards)
    
