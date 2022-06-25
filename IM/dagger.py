@@ -41,7 +41,8 @@ class TeacherAgent():
         状態stateから、状態価値qを返す
         """
         q = self.model.predict([state])[0] # ベクトルだけど，行列(横ベクトル)で返ってくるので，ベクトルにする
-        print("q:{}",format(q))
+        # print("q:{}",format(q)) 
+        # -> q:{} [1.29344435 1.53694468 1.46654825 1.44977168]
         return q
 
     def policy(self, state): 
