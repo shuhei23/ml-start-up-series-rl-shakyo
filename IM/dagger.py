@@ -130,7 +130,7 @@ class Student():
         self.model = None
 
     def initialize(self, state):
-        self.model = MLPClassifier(hidden_layer_size=(), max_iter = 1)
+        self.model = MLPClassifier(hidden_layer_sizes=(), max_iter = 1)
         dummy_action = 0
         # self.actions = list(env.action_space.n) = [0, 1, \dots, n_action]
         self.model.partial_fit([state], [dummy_action], classes=self.actions)
@@ -146,7 +146,7 @@ class Student():
 
         # Collect teacher's demonstrations "initial_step" times.
         for e in range(initial_step):
-            s = env.reset # Frozen Lake のスタート地点
+            s = env.reset() # Frozen Lake のスタート地点
             done = False
             while not done:
                 a = teacher.policy(s) # teacher からは policy しかもらっていない
