@@ -208,8 +208,9 @@ def main(teacher):
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description="Imitation Learning")
     parser.add_argument("--teacher", action="store_true", help="train teacher model")
-
     args = parser.parse_args()
+    # Step1. --teacher付きで実行して、teacherのモデルを保存する=>"imitation_teacher.pkl"
+    # Step2. 引数なしで実行して、studentのimitaionをする。
     main(args.teacher)
 
 
