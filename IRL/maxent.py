@@ -79,7 +79,8 @@ class MaxEntIRL():
         total = np.mean(transition_probs, axis =0)
         return total
                 
-
+if __name__ == "__main__":
+    pass
 
 
 
