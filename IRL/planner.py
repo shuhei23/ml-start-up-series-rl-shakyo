@@ -23,7 +23,7 @@ class Planner():
             for next_state in transition_probs:
                 prob = transition_probs[next_state]
                 reward = self.reward_func(next_state)
-                done = self.env.has_done(state) # *****next_stateじゃない？*****
+                done = self.env.has_done(next_state) # *****next_stateじゃない？*****
                 transition.append((prob, next_state, reward, done))
         else:
             transition.append((1.0, None, reward, done))
@@ -37,7 +37,7 @@ class Planner():
     
 
 
-class PolicyIteratePlanner(Planner):
+class PolicyIterationPlanner(Planner):
     
     def __init__(self, env):
         super().__init__(env)

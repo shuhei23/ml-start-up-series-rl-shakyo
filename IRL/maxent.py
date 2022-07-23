@@ -13,7 +13,7 @@ class MaxEntIRL():
         
         """
         state_features = np.vstack([self.env.state_to_feature(s) for s in self.env.states])
-        print(state_features)
+        #print(state_features)
         theta = np.random.uniform(size=state_features.shape[1])
         teacher_features = self.calculate_expected_feature(trajectories) # $f_expert$
         # $f_\zeta$
@@ -80,7 +80,49 @@ class MaxEntIRL():
         return total
                 
 if __name__ == "__main__":
-    pass
+    def test_estimate():
+        from environment import GridWorldEnv
+        # 迷路環境の定義
+        env = GridWorldEnv(grid=[
+            [0, 0, 0, 1],
+            [0, 0, 0, 0],
+            [0, -1, 0, 0],
+            [0, 0, 0, 0],
+        ])
+        # Train Teacher
+        teacher = PolicyIterationPlanner(env)
+        teacher_value_function = teacher.plan()
+        print(teacher_value_function)
+        env.plot_on_grid(teacher_value_function)
+
+        trajectories = []
+        teacher_rewards = []
+        print("Gather demonstrations of teacher\n")
+        for i in range(20): # エピソード20回教師データを集める
+            s = env.reset()
+            done = False
+            steps = [s]
+            teacher_reward_episode = [0]
+            while not done:
+                # done = Faleseのとき
+                a = teacher.act(s) # 教師モデルで入力を作る
+                n_s, r, done, _ = env.step(a)
+                steps.append(n_s)
+                teacher_reward_episode.append(r) 
+                s = n_s
+            trajectories.append(steps)
+            teacher_rewards.append(teacher_reward_episode)
+
+        print(teacher_rewards)
+
+        print("Estimate reward.\n")
+        irl = MaxEntIRL(env)
+        rewards = irl.estimate(trajectories, epoch=100)
+        print(rewards)
+        env.plot_on_grid(rewards)
+
+    test_estimate()
+
 
 
 

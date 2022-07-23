@@ -55,7 +55,7 @@ class GridWorldEnv(discrete.DiscreteEnv):
                     transition_probs = self.transit_func(s, a)
                     for n_s in transition_probs: 
                         reward = self.reward_func(n_s)
-                        done = self.has_done(s) # s じゃなく n_s かもしれない
+                        done = self.has_done(n_s) # s じゃなく n_s かもしれない
                         P[s][a].append([transition_probs[n_s], n_s, reward, done])
         self.P = P 
         super().__init__(num_states, num_actions, P, initial_state_prob)
@@ -157,10 +157,10 @@ class GridWorldEnv(discrete.DiscreteEnv):
     def plot_on_grid(self, values): 
         if len(values.shape) < 2: 
             values = values.reshape(self.shape)
-        fig, ax = plt.subplot()
+        fig, ax = plt.subplots()
         ax.imshow(values, cmap=cm.RdYlGn)
-        ax.set_xticks(np.arrange(self.ncol))
-        ax.set_yticks(np.arrange(self.nrow))
+        ax.set_xticks(np.arange(self.ncol))
+        ax.set_yticks(np.arange(self.nrow))
         fig.tight_layout()
         plt.show()
         
