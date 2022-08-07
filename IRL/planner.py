@@ -55,7 +55,7 @@ class PolicyIterationPlanner(Planner):
     
     def policy_to_q(self, V, gamma):
         Q = np.zeros((self.env.observation_space.n,
-                      self.action_space.n))
+                      self.env.action_space.n))
         
         for s in self.env.states:
             for a in self.env.actions: # E[r(s(k+1),a(k))] = \sum_{a_p\in Actions} Pr(a=a_p) E[r(s(k+1),a)|a=a_p]
